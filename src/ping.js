@@ -24,12 +24,14 @@ const avg = (...arr) => {
   return avg / arrLength;
 };
 
-const runPing = async (hosts, testsToRun = 100, averagingSize = 10, mtu = 500) => {
+const runPing = async (hosts, testsToRun = 100, averagingSize = 10, mtu = 500, dirtyRatio = 0.2) => {
   if (typeof hosts == 'string') hosts = [hosts];
 
   let times = [];
   let tmpAvg = 0;
   let failCount = 0;
+  let successCount = 0;
+  const speeds = [];
 
   for (let i = 0; i < testsToRun; ++i) {
     tmpAvg = 0;
@@ -45,10 +47,11 @@ const runPing = async (hosts, testsToRun = 100, averagingSize = 10, mtu = 500) =
     tmpAvg /= hosts.length;
     if (!isNaN(tmpAvg)) {
       times.push(tmpAvg);
+      successCount++;
     }
     else {
       failCount++;
-      if (failCount >= 10) {
+      if (i > 5 && failCount / successCount >= dirtyRatio) {
         const newMtu = await calibrateMTU(hosts, mtu - 25, true);
         await runPing(hosts, testsToRun, averagingSize, newMtu);
         return;
@@ -61,9 +64,11 @@ const runPing = async (hosts, testsToRun = 100, averagingSize = 10, mtu = 500) =
       printUpdate(`   |  at ${mtu} Bytes`, 0, 5, false, true);
       printUpdate(`   |__with average ${avg(times).toFixed(2)}, debug::times [${times}]ms`, 0, 6, false, true);
       times = [];
+      speeds.push(speed);
     }
   }
-  printUpdate(``, 0, 7, false, true);
+  printUpdate(`-> test done, average speed ${avg(speeds)}Mb/s`, 0, 7, false, true);
+  printUpdate(``, 0, 8, false, true);
 };
 
 
@@ -72,7 +77,7 @@ const calibrateMTU = async (hosts, startingMTU = 1500, retry = false) => {
 
   let mtu = startingMTU;
   let avg = NaN;
-  printUpdate(retry ? 'recalibrating MTU as 10 tests failed' : 'finding ideal MTU');
+  printUpdate(retry ? 'recalibrating MTU, exceeded dirty ratio ' : 'finding ideal MTU');
   while (isNaN(avg)) {
     avg = 0;
     printUpdate(`-> trying ${mtu}`, 0, 1, false);

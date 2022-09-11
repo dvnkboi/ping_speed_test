@@ -13,10 +13,10 @@ parser.add_argument('-m', '--mtu', { help: 'the starting MTU to test with, if fa
 (async () => {
   const args = parser.parse_args();
   args.ping = args.ping.trim().toLowerCase().split(',');
-  args.tests = parseInt(args.tests);
+  args.test = parseInt(args.test);
   args.averaging = parseInt(args.averaging);
   args.mtu = parseInt(args.mtu);
 
   const mtu = await ping.calibrateMTU(args.ping, args.mtu);
-  await ping.runPing(args.ping, args.tests, args.averaging, mtu);
+  await ping.runPing(args.ping, args.test, args.averaging, mtu);
 })();

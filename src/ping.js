@@ -4,9 +4,9 @@ const Jetty = require('jetty');
 const jetty = new Jetty(process.stdout);
 
 const printUpdate = (text, x = 0, y = 0, clear = true, clearLine = false) => {
+  jetty.moveTo([y, x]);
   if (clearLine) jetty.clearLine();
   if (clear) jetty.clear();
-  jetty.moveTo([y, x]);
   jetty.text(text);
 };
 
@@ -28,7 +28,6 @@ const runPing = async (hosts, testsToRun = 100, averagingSize = 10, mtu = 500) =
   if (typeof hosts == 'string') hosts = [hosts];
 
   let times = [];
-  const speeds = [];
   let tmpAvg = 0;
   let failCount = 0;
 
@@ -57,11 +56,14 @@ const runPing = async (hosts, testsToRun = 100, averagingSize = 10, mtu = 500) =
     }
     if (times.length >= averagingSize) {
       const speed = (mtu * 2 / avg(times));
-      printUpdate(`run ${i} (failed ${failCount})\n  ${speed.toFixed(2)} Mb/s\n  at ${mtu} Bytes\n  with average ${avg(times).toFixed(2)}, debug::times [${times}]ms`, 0, 3, false, true);
+      printUpdate(`|__run ${i} (failed ${failCount})`, 0, 3, false, true);
+      printUpdate(`   |  ${speed.toFixed(2)} Mb/s`, 0, 4, false, true);
+      printUpdate(`   |  at ${mtu} Bytes`, 0, 5, false, true);
+      printUpdate(`   |__with average ${avg(times).toFixed(2)}, debug::times [${times}]ms`, 0, 6, false, true);
       times = [];
     }
   }
-  printUpdate(``, 0, 7, false, false);
+  printUpdate(``, 0, 7, false, true);
 };
 
 
